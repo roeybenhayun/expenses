@@ -4,7 +4,7 @@ import re
 
 def analyze_supermarket_spending(csv_filepath):
     """
-    Analyzes supermarket spending from a CSV file and generates a monthly stacked bar chart.
+    Analyzes supermarket spending from a CSV file and generates a monthly stacked bar chart with average spending line.
 
     Args:
         csv_filepath (str): The path to the CSV file.
@@ -48,31 +48,45 @@ def analyze_supermarket_spending(csv_filepath):
     monthly_spending = supermarket_df.groupby([pd.Grouper(key='transactiondate', freq='M'), 'supermarket'])['amount'].sum().unstack(fill_value=0)
     monthly_counts = supermarket_df.groupby([pd.Grouper(key='transactiondate', freq='M'), 'supermarket']).size().unstack(fill_value=0)
 
+    # Calculate the average monthly spending across all supermarkets
+    monthly_total_spending = monthly_spending.sum(axis=1)
+    average_monthly_spending = monthly_total_spending.mean()
 
     # Plotting the stacked bar chart
-    monthly_spending.plot(kind='bar', stacked=True, figsize=(12, 7))
-    plt.title('Monthly Groceries Spending by Supermarket')
-    plt.xlabel('Month and Year')
-    plt.ylabel('Total Amount Spent')
-    plt.xticks(rotation=45)
+    fig, ax1 = plt.subplots(figsize=(12, 7))
+    monthly_spending.plot(kind='bar', stacked=True, ax=ax1)
+    ax1.set_title('Monthly Groceries Spending by Supermarket with Average Spending Line')
+    ax1.set_xlabel('Month and Year')
+    ax1.set_ylabel('Total Amount Spent')
+    ax1.set_xticks(range(len(monthly_spending.index)))
+    ax1.set_xticklabels([month.strftime('%b-%Y') for month in monthly_spending.index], rotation=45)
+    ax1.legend(title='Supermarket')
 
-    # Format x-axis labels to show only Month and Year
-    months = monthly_spending.index
-    month_year_labels = [month.strftime('%b-%Y') for month in months]
-    plt.gca().set_xticklabels(month_year_labels)
+    # Add the average spending line
+    ax1.axhline(average_monthly_spending, color='red', linestyle='--', linewidth=1, label=f'Average: {average_monthly_spending:.2f}')
+    ax1.legend(loc='upper left') # Adjust legend location to avoid overlap
 
-    plt.legend(title='Supermarket')
     plt.tight_layout()
     plt.show()
 
+    ## Calculate the average monthly transaction counts across all supermarkets
+    monthly_total_counts = monthly_counts.sum(axis=1)
+    average_monthly_counts = monthly_total_counts.mean()
+
     # Plotting the bar chart for transaction counts
-    monthly_counts.plot(kind='bar', figsize=(12, 7))
-    plt.title('Monthly Number of Transactions per Supermarket')
-    plt.xlabel('Month and Year')
-    plt.ylabel('Number of Transactions')
-    plt.xticks(rotation=45)
-    plt.gca().set_xticklabels([month.strftime('%b-%Y') for month in monthly_counts.index])
-    plt.legend(title='Supermarket')
+    fig, ax2 = plt.subplots(figsize=(12, 7))
+    monthly_counts.plot(kind='bar', ax=ax2)
+    ax2.set_title('Monthly Number of Transactions per Supermarket with Average Transaction Count Line')
+    ax2.set_xlabel('Month and Year')
+    ax2.set_ylabel('Number of Transactions')
+    ax2.set_xticks(range(len(monthly_counts.index)))
+    ax2.set_xticklabels([month.strftime('%b-%Y') for month in monthly_counts.index], rotation=45)
+    ax2.legend(title='Supermarket')
+
+    # Add the average transaction count line
+    ax2.axhline(average_monthly_counts, color='red', linestyle='--', linewidth=1, label=f'Average: {average_monthly_counts:.2f}')
+    ax2.legend(loc='upper left')  # Adjust legend location to avoid overlap
+
     plt.tight_layout()
     plt.show()
 
